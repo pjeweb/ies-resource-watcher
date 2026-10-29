@@ -6,11 +6,11 @@ Sitepark IES publishes resources to the web nodes, often through rsync. The nati
 
 The package is a Symfony bundle. It runs inside an Atoolo application, or attached to an installed one that must not be modified, such as the FEDS module of an IES web node.
 
-> Status: in production at Stadt Braunschweig on the WWW web node since 2026-10-29, attached to FEDS 1.30 with Atoolo Search 1.14 and about 69,000 published resources. It replaced a Python predecessor with the same guarantees.
+> Status: in production at Stadt Braunschweig on the WWW, Preview and Intranet web nodes since 2026-10-29, attached to FEDS 1.30 with Atoolo Search 1.14. A staging instance watches a dedicated fixture tree. The package replaces the previous Python service.
 
 ## Guarantees
 
-- **Durable queue.** File events are committed to SQLite (WAL, `synchronous=FULL`) before any job starts. A crash or restart loses nothing; changes made while the watcher was stopped are found by the next scan.
+- **Durable queue.** File events are committed to SQLite (WAL, `synchronous=FULL`) before any job starts. Committed paths survive a crash or restart; the next scan reconciles changes made while the watcher was stopped.
 - **No stale acknowledgement.** Every observation of a path increases its revision. A job can only acknowledge the revision it processed; a newer version stays queued.
 - **Identity before writing.** A job first plans which documents it will write, records them durably, and only then writes. If the job dies after writing and the file is deleted while the watcher is down, the document can still be removed.
 - **Exact version.** The planned resource is pinned in memory, so the indexer writes exactly the version whose identity was recorded.
@@ -52,7 +52,7 @@ The bundled adapter is `Atoolo\Search1\AtooloSearchTarget`. Other index targets 
 | `plan(paths)` | job | Documents the paths will hold; writes nothing |
 | `apply(plan, previous)` | job | Write, then remove previous documents conditionally |
 | `verify(plan, previous)` | job | Throw unless the index reflects both |
-| `identify(paths)` | job | Documents currently held for baseline files |
+| `identify(paths, deadline)` | job | Documents currently held for baseline files |
 
 The core enforces the order *plan → durable intent → apply → verify*. Adapters cannot skip the intent.
 
@@ -68,9 +68,14 @@ The core enforces the order *plan → durable intent → apply → verify*. Adap
 
 ### In an Atoolo application
 
+The repository is currently private and the package is not published on Packagist. Configure an authenticated VCS repository in the consuming project first:
+
 ```sh
-composer require stadt-braunschweig/ies-resource-watcher
+composer config repositories.ies-resource-watcher vcs https://github.com/pjeweb/ies-resource-watcher
+composer require stadt-braunschweig/ies-resource-watcher:dev-main
 ```
+
+Use Composer's normal GitHub authentication; do not put credentials in a committed repository URL.
 
 ```php
 // config/bundles.php
@@ -165,7 +170,7 @@ Only the combination listed under *Requirements* is tested. The current developm
 - Loading a SiteKit file executes it. A helper script that fetches a URL while it is loaded blocks for the socket timeout. Identification therefore stops starting new paths after 40 % of `job_timeout` and continues in the next job. A file that does not return resource data is treated as excluded, as the native full run skips it.
 - Identification of baseline files runs in the background after the first scan. A baseline file deleted before it was identified, or one that cannot be identified, is not removed by the watcher; the next native full run does it.
 - Content changes during the 3-second deferral window are coalesced, so intermediate versions are never indexed (by design).
-- PHP reports modification times in seconds. The full-index checkpoint therefore also uses inode, change time and size; the lock itself is observed continuously.
+- The full-index checkpoint uses the native status field `startTime`, which changes for full runs but survives individual updates. File modification times would also change for delayed updates and are not a reliable full-run marker. The native lock is inspected read-only throughout the job.
 
 ## Testing
 
