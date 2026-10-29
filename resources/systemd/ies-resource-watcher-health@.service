@@ -1,0 +1,11 @@
+[Unit]
+Description=Check IES resource watcher queue (%i)
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/php /usr/local/lib/ies-resource-watcher/bin/ies-resource-watcher /etc/ies-resource-watcher/%i.json ies-resource-watcher:status
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true

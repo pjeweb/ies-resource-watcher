@@ -1,0 +1,10 @@
+[Unit]
+Description=Check IES resource watcher queue every two minutes (%i)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=2min
+Unit=ies-resource-watcher-health@%i.service
+
+[Install]
+WantedBy=timers.target

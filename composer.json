@@ -1,0 +1,47 @@
+{
+    "name": "stadt-braunschweig/ies-resource-watcher",
+    "description": "Durable filesystem watcher that indexes published IES resources as soon as they arrive on the web node",
+    "type": "symfony-bundle",
+    "keywords": ["sitepark", "ies", "atoolo", "solr", "inotify", "indexing"],
+    "require": {
+        "php": ">=8.1",
+        "ext-ffi": "*",
+        "ext-json": "*",
+        "ext-pcntl": "*",
+        "ext-pdo_sqlite": "*",
+        "ext-posix": "*",
+        "symfony/config": "^6.4 || ^7.0",
+        "symfony/console": "^6.4 || ^7.0",
+        "symfony/dependency-injection": "^6.4 || ^7.0",
+        "symfony/http-kernel": "^6.4 || ^7.0",
+        "symfony/process": "^6.4 || ^7.0"
+    },
+    "require-dev": {
+        "atoolo/resource-bundle": "1.8.0",
+        "atoolo/search-bundle": "1.14.0",
+        "phpunit/phpunit": "^10.5",
+        "symfony/framework-bundle": "^6.4",
+        "symfony/yaml": "^6.4"
+    },
+    "suggest": {
+        "ext-sockets": "systemd readiness and watchdog notification",
+        "atoolo/search-bundle": "Solr adapter for Atoolo Search 1.x (tested with 1.14)"
+    },
+    "autoload": {
+        "psr-4": {
+            "StadtBraunschweig\\IesResourceWatcher\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "StadtBraunschweig\\IesResourceWatcher\\Tests\\": "tests/"
+        }
+    },
+    "bin": ["bin/ies-resource-watcher"],
+    "config": {
+        "platform": {"php": "8.2.35"},
+        "sort-packages": true,
+        "allow-plugins": {"php-http/discovery": false}
+    },
+    "minimum-stability": "stable"
+}

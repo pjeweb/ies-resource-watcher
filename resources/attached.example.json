@@ -1,0 +1,17 @@
+{
+    "project": "/srv/sitepark/ies-webnode/feds/commons-feds",
+    "resource_root": "/var/www/example/www",
+    "environment": "prod",
+    "watcher": {
+        "state_dir": "/var/lib/ies-resource-watcher/www",
+        "scopes": ["/"],
+        "prune": ["*.scaled", "node_modules"],
+        "quiet_period": 0.75,
+        "batch_size": 32,
+        "reconcile_interval": 3600,
+        "job_timeout": 120,
+        "atoolo_search": {
+            "index": "example-www"
+        }
+    }
+}

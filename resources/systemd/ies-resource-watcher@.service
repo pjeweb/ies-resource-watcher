@@ -1,0 +1,41 @@
+[Unit]
+Description=IES resource watcher (%i)
+Documentation=file:///usr/local/lib/ies-resource-watcher/README.md
+After=network-online.target ies-webnode.service
+
+[Service]
+Type=notify
+NotifyAccess=main
+# The user of the native indexer.
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/php /usr/local/lib/ies-resource-watcher/bin/ies-resource-watcher /etc/ies-resource-watcher/%i.json ies-resource-watcher:watch
+Restart=on-failure
+RestartSec=10s
+# READY follows the first complete scan; a large publication takes minutes.
+TimeoutStartSec=20min
+TimeoutStopSec=20s
+WatchdogSec=60s
+StateDirectory=ies-resource-watcher/%i
+StateDirectoryMode=0750
+UMask=0027
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+# The native lock must be visible: FlockStore defaults to the host's /tmp
+# (and checks on construction that it is writable), SemaphoreStore uses host IPC.
+PrivateTmp=false
+PrivateIPC=false
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ies-resource-watcher/%i /tmp
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+KillMode=control-group
+MemoryMax=768M
+TasksMax=64
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
