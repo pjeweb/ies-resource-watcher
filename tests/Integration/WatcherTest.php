@@ -374,6 +374,20 @@ final class WatcherTest extends TestCase
         self::assertSame([], (new QueueStore($this->state . '/queue.sqlite'))->documents('/old/x.php'));
     }
 
+    public function testIdentificationOfSlowResourcesStaysWithinTheJobTimeout(): void
+    {
+        foreach (range(1, 4) as $number) {
+            $this->put("/slow/$number.php", 'slow');
+        }
+        $this->put('/slow/x.php', 'v1');
+        // 4 x 1s would exceed a 2s timeout in one job; the budget splits the work instead.
+        $this->start(['job_timeout' => 2.5, 'identify_batch_size' => 10]);
+        $this->until($this->settled(...), 60, 'identified in several jobs');
+        $log = (string) file_get_contents($this->tmp . '/watcher.log');
+        self::assertStringNotContainsString('identify_retry', $log);
+        self::assertGreaterThan(1, substr_count($log, '"event":"identified"'));
+    }
+
     public function testSecondWatcherOnTheSameStateIsRefused(): void
     {
         $this->start();

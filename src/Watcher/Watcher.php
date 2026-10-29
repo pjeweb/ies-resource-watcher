@@ -467,7 +467,9 @@ final class Watcher
         if ($this->config->identifyBatchSize > 0 && microtime(true) >= $this->identifyAfter) {
             $paths = $this->store->unidentified($this->identifySize ?? $this->config->identifyBatchSize);
             if ($paths !== []) {
-                $this->launch('identify', ['action' => 'identify', 'paths' => $paths], [], $paths, null);
+                // The budget leaves the rest of the timeout for a slow last resource and the index lookup.
+                $request = ['action' => 'identify', 'paths' => $paths, 'budget' => $this->config->jobTimeout * 0.4];
+                $this->launch('identify', $request, [], $paths, null);
             }
         }
     }
@@ -588,10 +590,15 @@ final class Watcher
         /** @var array<string, list<array{id: string, index: string, url: string}>> $documents */
         $documents = $result['documents'] ?? [];
         $identities = [];
-        // A path the target could not identify counts as holding nothing, so
-        // that identification always progresses.
+        // Paths beyond the job's budget are absent and offered again. A job that
+        // processed nothing counts as failed, so that halving isolates the cause.
         foreach ($paths as $path) {
-            $identities[$path] = array_map(Document::fromArray(...), $documents[$path] ?? []);
+            if (array_key_exists($path, $documents)) {
+                $identities[$path] = array_map(Document::fromArray(...), $documents[$path]);
+            }
+        }
+        if ($identities === []) {
+            throw new \RuntimeException('identification processed no path');
         }
         $this->store->identify($identities);
         $this->identifyFailures = 0;

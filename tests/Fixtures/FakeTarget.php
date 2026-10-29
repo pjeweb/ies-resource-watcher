@@ -98,11 +98,17 @@ final class FakeTarget implements IndexTarget
         }
     }
 
-    public function identify(array $paths): array
+    public function identify(array $paths, float $deadline = INF): array
     {
         $index = self::read($this->control . '/index.json');
         $result = [];
         foreach ($paths as $path) {
+            if ($result !== [] && microtime(true) > $deadline) {
+                break;
+            }
+            if (@file_get_contents($this->root . $path) === 'slow') {
+                sleep(1); // like a SiteKit file that fetches a URL while it is loaded
+            }
             if (@file_get_contents($this->root . $path) === 'unidentifiable') {
                 throw new \RuntimeException('cannot identify ' . $path);
             }

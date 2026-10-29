@@ -271,11 +271,23 @@ final class AtooloSearchTargetTest extends TestCase
         self::assertArrayNotHasKey('sp_generated', $this->solr->cores['test-www']['40']);
     }
 
-    public function testBrokenResourceFailsTheJob(): void
+    public function testFileThatIsNoResourceIsExcludedAndLosesItsDocument(): void
     {
-        $this->write($this->root . '/broken.php', '<?php syntax error');
-        $this->store->observe('/broken.php', 'v', true);
-        $this->expectException(\Throwable::class);
-        $this->runner->sync($this->store->pendingFor('/broken.php'));
+        $this->resource('/helper.php', 60, 'Helper');
+        $this->sync('/helper.php');
+        self::assertArrayHasKey('60', $this->solr->cores['test-www']);
+        // Now a script that does not return resource data, as the native full run would see it.
+        $this->write($this->root . '/helper.php', '<?php echo "template";');
+        $plan = $this->sync('/helper.php');
+        self::assertStringStartsWith('not a resource', (string) $plan['/helper.php']->reason);
+        self::assertArrayNotHasKey('60', $this->solr->cores['test-www']);
+    }
+
+    public function testIdentificationStopsAtTheDeadlineAfterAtLeastOnePath(): void
+    {
+        $this->resource('/a.php', 1, 'A');
+        $this->resource('/b.php', 2, 'B');
+        $identities = $this->runner->identify(['/a.php', '/b.php'], microtime(true) - 1);
+        self::assertSame(['/a.php'], array_keys($identities));
     }
 }

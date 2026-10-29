@@ -62,9 +62,12 @@ interface IndexTarget
      *
      * A path whose resource cannot be read holds nothing ([]). Throw only if
      * the index itself cannot be queried, so that the job is retried later.
+     * Loading a resource can be slow (SiteKit files may run arbitrary code):
+     * after $deadline (microtime), start no further paths. Paths missing from
+     * the result were not processed and are offered again later.
      *
      * @param list<string> $paths
      * @return array<string, list<Document>> keyed by path
      */
-    public function identify(array $paths): array;
+    public function identify(array $paths, float $deadline = INF): array;
 }

@@ -162,6 +162,7 @@ Only the combination listed under *Requirements* is tested. The current developm
 - File names must be valid UTF-8; others are skipped and logged (`skipped_name`).
 - Documents an enricher writes on its own, such as CityGov alternative titles (`<id>-<n>`), are not tracked. When their resource is deleted they remain until the next native full run, as with the native ad-hoc indexing.
 - Search tips (`objectType` `searchTip`) carry no `sp_source` because the native enricher stops early. The adapter recognises them by their object type.
+- Loading a SiteKit file executes it. A helper script that fetches a URL while it is loaded blocks for the socket timeout. Identification therefore stops starting new paths after 40 % of `job_timeout` and continues in the next job. A file that does not return resource data is treated as excluded, as the native full run skips it.
 - Identification of baseline files runs in the background after the first scan. A baseline file deleted before it was identified, or one that cannot be identified, is not removed by the watcher; the next native full run does it.
 - Content changes during the 3-second deferral window are coalesced, so intermediate versions are never indexed (by design).
 - PHP reports modification times in seconds. The full-index checkpoint therefore also uses inode, change time and size; the lock itself is observed continuously.

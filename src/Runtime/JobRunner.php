@@ -60,14 +60,14 @@ final class JobRunner
 
     /**
      * @param list<string> $paths
-     * @return array<string, list<Document>>
+     * @return array<string, list<Document>> only the paths processed before the deadline
      */
-    public function identify(array $paths): array
+    public function identify(array $paths, float $deadline = INF): array
     {
         foreach ($paths as $path) {
             $this->policy->physical($path);
         }
-        return $this->target->identify($paths);
+        return array_intersect_key($this->target->identify($paths, $deadline), array_flip($paths));
     }
 
     /**
@@ -80,7 +80,10 @@ final class JobRunner
     {
         return match ($request['action'] ?? null) {
             'sync' => ['ok' => true, 'paths' => $this->sync(array_map(QueuedPath::fromArray(...), $request['items']))],
-            'identify' => ['ok' => true, 'documents' => $this->identify(array_values($request['paths']))],
+            'identify' => ['ok' => true, 'documents' => $this->identify(
+                array_values($request['paths']),
+                isset($request['budget']) ? microtime(true) + (float) $request['budget'] : INF,
+            )],
             default => throw new \InvalidArgumentException('unknown job action'),
         };
     }

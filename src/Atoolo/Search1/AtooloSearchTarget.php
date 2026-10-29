@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StadtBraunschweig\IesResourceWatcher\Atoolo\Search1;
 
+use Atoolo\Resource\Exception\InvalidResourceException;
 use Atoolo\Resource\ResourceChannel;
 use Atoolo\Resource\ResourceLanguage;
 use Atoolo\Resource\ResourceLocation;
@@ -121,7 +122,14 @@ final class AtooloSearchTarget implements IndexTarget
                 $plan[$path] = PathPlan::excluded('native exclude');
                 continue;
             }
-            $resource = $this->loader->pin(self::location($path));
+            try {
+                $resource = $this->loader->pin(self::location($path));
+            } catch (InvalidResourceException $error) {
+                // Not a resource (e.g. a helper script in the publication). The native
+                // full run skips it too, and its cleanup drops what was indexed before.
+                $plan[$path] = PathPlan::excluded('not a resource: ' . $error->getMessage());
+                continue;
+            }
             if (!$this->filter->accept($resource)) {
                 $plan[$path] = PathPlan::excluded('native filter');
                 continue;
@@ -196,15 +204,19 @@ final class AtooloSearchTarget implements IndexTarget
         }
     }
 
-    public function identify(array $paths): array
+    public function identify(array $paths, float $deadline = INF): array
     {
         $this->base();
         $root = $this->root();
+        $excludes = $this->excludes();
         $result = [];
         $wanted = []; // index => id => paths
         foreach ($paths as $path) {
+            if ($result !== [] && microtime(true) > $deadline) {
+                break;
+            }
             $result[$path] = [];
-            if (!is_file($root . $path) || is_link($root . $path)) {
+            if (!is_file($root . $path) || is_link($root . $path) || $this->finder->findPaths([$path], $excludes) === []) {
                 continue;
             }
             try {
