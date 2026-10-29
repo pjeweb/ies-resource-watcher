@@ -2,6 +2,7 @@
     "name": "stadt-braunschweig/ies-resource-watcher",
     "description": "Durable filesystem watcher that indexes published IES resources as soon as they arrive on the web node",
     "type": "symfony-bundle",
+    "license": "MIT",
     "keywords": ["sitepark", "ies", "atoolo", "solr", "inotify", "indexing"],
     "require": {
         "php": ">=8.1",

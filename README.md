@@ -183,4 +183,4 @@ A real Solr with the Sitepark schema and a CMS publication are not part of this 
 
 ## License
 
-To be decided before publication. MIT, as for Atoolo, is proposed.
+[MIT](LICENSE). Copyright (c) 2026 Stadt Braunschweig.

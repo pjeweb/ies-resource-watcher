@@ -84,7 +84,7 @@ fi
 
 # Code: only what attached mode needs, root-owned and read-only for the service.
 staging=$(mktemp -d "$prefix.new.XXXXXX")
-cp -a "$package/bin" "$package/src" "$package/resources" "$package/README.md" "$package/composer.json" "$staging/"
+cp -a "$package/bin" "$package/src" "$package/resources" "$package/README.md" "$package/LICENSE" "$package/composer.json" "$staging/"
 chown -R root:root "$staging"
 chmod -R u=rwX,go=rX "$staging"
 rm -rf "$prefix.old"
